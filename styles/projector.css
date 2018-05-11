@@ -1,0 +1,115 @@
+body {
+    background:#444444;
+    padding:0;
+    margin:0;
+    overflow:hidden;
+}
+
+.mainContainer {
+    background-color: #444444;
+    width: 100%;
+    height: 100%;
+}
+
+a {
+    color: white;
+}
+
+.headerContainer, .footerContainer {
+    width: 100%;
+    margin: 0;
+    padding: 5px;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: space-evenly;
+    background-color: #444444;
+    color: white;
+    font-family: Monospace;
+    font-size: 13px;
+}
+
+/*.headerLeft, .headerCenter, .headerRight,*/
+/*.footerLeft, .footerCenter, .footerRight {*/
+    /*padding: 5px;*/
+/*}*/
+
+.headerLeft, .headerRight,
+.footerLeft, .footerRight {
+    width: 15%;
+    padding: 5px;
+    text-align: left;
+    /*background-color: darkgrey;*/
+}
+
+.headerCenter,
+.footerCenter {
+    /*width: 800px;*/
+    width: 65%;
+    padding: 5px;
+    /*background-color: darkgrey;*/
+}
+
+
+.contentContainer {
+    width: 100%;
+    margin: 0;
+    padding: 5px;
+    box-sizing: border-box;
+    display: flex; /* Flexbox container */
+    justify-content: space-evenly;
+    background-color: lightgray;
+}
+
+.upperLeft, .upperRight {
+    width: 15%;
+    padding: 5px;
+    text-align: left;
+    background-color: darkgrey;
+    font-family: Monospace;
+    font-size: 13px;
+    color: darkblue;
+}
+
+/*.upperLeft {*/
+    /*width: 15%;*/
+    /*padding: 5px;*/
+    /*background-color: #888888;*/
+/*}*/
+
+#canvasContainer {
+    width: 65%;
+    /*width: 800px;*/
+    /*height: 450px;*/
+    height: 600px;
+    /*height: 80%;*/
+    /*padding: 5px;*/
+    background-color: #888888;
+}
+
+/*.upperRight {*/
+    /*width: 15%;*/
+    /*padding: 5px;*/
+    /*box-sizing: border-box;*/
+    /*display: flex;*/
+    /*justify-content: flex-end;*/
+    /*background-color: #888888;*/
+/*}*/
+
+#cameraInfo {
+    /*clear: both;*/
+    /*float: right;*/
+    /*position: absolute;*/
+    /*top: 100px;*/
+    /*right: ;*/
+    /*width: 20em;*/
+    /*color: darksalmon;*/
+    color: #ffebcd;
+    /*padding: 1em;*/
+    /*font-family: Monospace;*/
+    /*font-size: 13px;*/
+    text-align: left;
+}
+
+strong {
+    color: yellow;
+}

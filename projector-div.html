@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - collada - skinning</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+
+		<link href="styles/projector.css" rel="stylesheet" type="text/css" media="all">
+	</head>
+	<body>
+
+		<div class="mainContainer">
+			<div class="headerContainer">
+				<div class="headerLeft">left</div>
+				<div class="headerCenter">
+					<a href="https://threejs.org" target="_blank" rel="noopener">three.js</a> collada loader - skinning
+					| Dancing Stormtrooper by <a href="https://sketchfab.com/strykerdoesgames" target="_blank" rel="noopener">StrykerDoesAnimation</a> is licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC Attribution</a>
+				</div>
+				<div class="headerRight">right</div>
+			</div>
+			<div class="contentContainer">
+				<div class="upperLeft">
+					<div id="windowW">window width: </div>
+					<div id="windowH">window height: </div>
+				</div>
+				<div id="canvasContainer"></div>
+				<div class="upperRight">right column goes all the way out to here</div>
+			</div>
+			<div class="footerContainer">
+				<div class="footerLeft">move projector:<br>
+					<strong>w</strong> forward toward screen<br>
+					<strong>s</strong> backward away from screen<br>
+					<strong>a</strong> left<br>
+					<strong>d</strong> right<br>
+					<strong>q</strong> up<br>
+					<strong>e</strong> down
+				</div>
+				<div class="footerCenter">
+					toggle lights: <strong>z</strong> for left directional light, <strong>c</strong> for right directional light<br>
+				</div>
+				<div class="footerRight">navigation:<br>
+					<strong>left</strong> move camera left<br>
+					<strong>right</strong> move camera right<br>
+					<strong>up</strong> move camera up<br>
+					<strong>down</strong> move camera down<br>
+					<strong>left-mouse</strong> orbit camera<br>
+					<strong>right-mouse</strong> pan camera<br>
+					<strong>scroll wheel</strong> zoom<br>
+				</div>
+			</div>
+		</div>
+
+
+		<script src="js/three.js"></script>
+		<script src="js/loaders/ColladaLoader.js"></script>
+		<script src="js/controls/OrbitControls.js"></script>
+		<!--<script src="js/controls/TrackballControls.js"></script>-->
+		<script src="js/controls/DragControls.js"></script>
+		<script src="js/Detector.js"></script>
+		<script src="js/libs/stats.min.js"></script>
+
+		<script type="x-shader/x-vertex" id="vertexShader">
+
+			varying vec3 vWorldPosition;
+
+			void main() {
+
+				vec4 worldPosition = modelMatrix * vec4( position, 1.0 );
+				vWorldPosition = worldPosition.xyz;
+
+				gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+
+			}
+
+		</script>
+
+		<script type="x-shader/x-fragment" id="fragmentShader">
+
+			uniform vec3 topColor;
+			uniform vec3 bottomColor;
+			uniform float offset;
+			uniform float exponent;
+
+			varying vec3 vWorldPosition;
+
+			void main() {
+
+				float h = normalize( vWorldPosition + offset ).y;
+				gl_FragColor = vec4( mix( bottomColor, topColor, max( pow( max( h , 0.0), exponent ), 0.0 ) ), 1.0 );
+
+			}
+
+		</script>
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var container, stats, clock, controls;
+			var displayWidth, displayHeight;
+			var camera, scene, renderer, mixer;
+			var cameraData;
+            var directionalLight1, directionalLight2;
+            var dirLight1Helper, dirLight2Helper;
+
+            var raycaster, mouse;
+            var projector, projectorScreen;
+            var objects = [];
+
+			init();
+			animate();
+
+			function init() {
+
+			    /* Match these to #canvasContainer in stylesheet */
+			    displayWidth = document.getElementById('canvasContainer').clientWidth;
+			    // displayHeight = 450;
+			    displayHeight = document.getElementById('canvasContainer').clientHeight;
+
+				// container = document.getElementById( 'container' );
+				container = document.getElementById( 'canvasContainer' );
+
+				showWindowSize(); // testing
+
+				// console.log("div width: " + document.getElementById('canvasContainer').clientWidth);
+				// console.log("div height: " + document.getElementById('canvasContainer').clientHeight);
+
+                // document.getElementById("info").addEventListener("click", function() {
+                //     console.log(JSON.stringify(cameraData));
+                // })
+
+                // console.log("window innerWidth:  " + window.innerWidth);
+                // console.log("window innerHeight: " + window.innerHeight);
+                // console.log("window ratio:      " + (window.innerWidth / window.innerHeight));
+
+                // camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 10000 );
+                camera = new THREE.PerspectiveCamera( 45, displayWidth / displayHeight, 0.1, 10000 );
+				// camera.position.set( 15, 10, - 15 );
+				// x, y, z
+				// camera.position.set( 0, 1.5, -3 );
+				camera.position.set( 2, 2, -4.5 );
+
+				scene = new THREE.Scene();
+                // scene.background = new THREE.Color().setHSL( 0.6, 0, 1 );
+                scene.background = new THREE.Color().setHSL( 0.6, 0, 0.15 );
+                // scene.fog = new THREE.Fog( scene.background, 1, 5000 );
+
+				clock = new THREE.Clock();
+
+                // loading manager LoadingManager( onLoad, onProgress, onError)
+				// only using onLoad function, do the following when everything is loaded.
+
+                var loadingManager = new THREE.LoadingManager( function() {
+
+                    //
+                    scene.add(projector);
+                    scene.add(projectorScreen);
+
+                } );
+
+                // collada
+
+				// var loader = new THREE.ColladaLoader();
+
+				// Calls back to loadingManager to provide updates for onLoad, onProgress, onError
+				var loader = new THREE.ColladaLoader(loadingManager);
+
+				// Loads Projector1.dae, and creates onLoad function
+				loader.load( './models/collada/Projector1.dae', function ( collada ) {
+
+					// var animations = collada.animations;
+					// var avatar = collada.scene;
+                    //
+					// mixer = new THREE.AnimationMixer( avatar );
+					// var action = mixer.clipAction( animations[ 0 ] ).play();
+                    //
+					// scene.add( avatar );
+
+					projector = collada.scene;
+					projector.name = "projector-benq";
+					// projector.position.set(0, 1, 0);
+					projector.position.set(0, 1, 0);
+
+				} );
+
+				var screenLoader = new THREE.ColladaLoader(loadingManager);
+				screenLoader.load( './models/collada/ProjectorScreen120inch.dae', function ( collada ) {
+
+					// var animations = collada.animations;
+					// var avatar = collada.scene;
+                    //
+					// mixer = new THREE.AnimationMixer( avatar );
+					// var action = mixer.clipAction( animations[ 0 ] ).play();
+                    //
+					// scene.add( avatar );
+
+					projectorScreen = collada.scene;
+					projectorScreen.name = "projector-screen-avia";
+					projectorScreen.position.set(4, 1, 0);
+
+				} );
+
+				// objects.push(projector);
+				// objects.push(projectorScreen);
+
+
+				//
+
+                var geometry = new THREE.BoxGeometry( 2, 2, 2 );
+
+                for ( var i = 0; i < 5; i ++ ) {
+
+                    var object = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) );
+
+                    object.position.x = Math.random() * 5 - 2.5;
+                    object.position.y = Math.random() * 3 - 1.5;
+                    object.position.z = Math.random() * 4 - 2;
+
+                    object.rotation.x = Math.random() * 2 * Math.PI;
+                    object.rotation.y = Math.random() * 2 * Math.PI;
+                    object.rotation.z = Math.random() * 2 * Math.PI;
+
+                    object.scale.x = Math.random() * 0.1 + 0.1;
+                    object.scale.y = Math.random() * 0.1 + 0.1;
+                    object.scale.z = Math.random() * 0.1 + 0.1;
+
+                    object.castShadow = true;
+                    object.receiveShadow = true;
+
+                    scene.add( object );
+
+                    objects.push( object );
+
+                }
+
+                //
+
+                var gridHelper = new THREE.GridHelper( 10, 20 );
+				scene.add( gridHelper );
+
+				//
+
+                // hemiLight = new THREE.HemisphereLight( 0xffffff, 0xffffff, 0.6 );
+                // hemiLight.color.setHSL( 0.6, 1, 0.6 );
+                // hemiLight.groundColor.setHSL( 0.095, 1, 0.75 );
+                // hemiLight.position.set( 0, 50, 0 );
+                // scene.add( hemiLight );
+                //
+                // hemiLightHelper = new THREE.HemisphereLightHelper( hemiLight, 10 );
+                // scene.add( hemiLightHelper );
+                //
+                //
+                // // GROUND
+                // var groundGeo = new THREE.PlaneBufferGeometry( 10000, 10000 );
+                // var groundMat = new THREE.MeshPhongMaterial( { color: 0xffffff, specular: 0x050505 } );
+                // groundMat.color.setHSL( 0.095, 1, 0.75 );
+                //
+                // var ground = new THREE.Mesh( groundGeo, groundMat );
+                // ground.rotation.x = -Math.PI/2;
+                // ground.position.y = -33;
+                // scene.add( ground );
+                //
+                // ground.receiveShadow = true;
+                //
+                // // SKYDOME
+                //
+                // var vertexShader = document.getElementById( 'vertexShader' ).textContent;
+                // var fragmentShader = document.getElementById( 'fragmentShader' ).textContent;
+                // var uniforms = {
+                //     topColor:    { value: new THREE.Color( 0x0077ff ) },
+                //     bottomColor: { value: new THREE.Color( 0xffffff ) },
+                //     offset:      { value: 33 },
+                //     exponent:    { value: 0.6 }
+                // };
+                // uniforms.topColor.value.copy( hemiLight.color );
+                //
+                // scene.fog.color.copy( uniforms.bottomColor.value );
+                //
+                // var skyGeo = new THREE.SphereGeometry( 4000, 32, 15 );
+                // var skyMat = new THREE.ShaderMaterial( { vertexShader: vertexShader, fragmentShader: fragmentShader, uniforms: uniforms, side: THREE.BackSide } );
+                //
+                // var sky = new THREE.Mesh( skyGeo, skyMat );
+                // scene.add( sky );
+
+                //
+
+                // var ambientLight = new THREE.AmbientLight( 0xffffff, 0.2 );
+                // var ambientLight = new THREE.AmbientLight( 0xffffff, 0.2 );
+                // scene.add( ambientLight );
+
+				// var directionalLight = new THREE.DirectionalLight( 0xffffff, 0.8 );
+				// directionalLight.position.set( 1, 1, - 1 );
+				// scene.add( directionalLight );
+
+				// Light above, in front and to the left of projector
+				directionalLight1 = new THREE.DirectionalLight( 0xffffff, 0.8 );
+				// directionalLight1.position.set( 2, 3, -2 );
+				directionalLight1.position.set( 3, 4, -3 );
+				scene.add( directionalLight1 );
+
+                dirLight1Helper = new THREE.DirectionalLightHelper(directionalLight1, 1);
+                scene.add( dirLight1Helper );
+
+
+                // Light above, behind and to the right of projector
+				directionalLight2 = new THREE.DirectionalLight( 0xffffff, 0.8 );
+				// directionalLight2.position.set( -2, 3, 2 );
+				directionalLight2.position.set( -3, 4, 3 );
+				scene.add( directionalLight2 );
+
+                dirLight2Helper = new THREE.DirectionalLightHelper(directionalLight2, 1);
+                scene.add( dirLight2Helper );
+
+                // var hemiLight = new THREE.HemisphereLight( 0xffffbb, 0x080820, 1 );
+                // scene.add( hemiLight );
+				//
+
+				// renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				// renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setSize( displayWidth, displayHeight );
+				container.appendChild( renderer.domElement );
+
+				//
+
+				controls = new THREE.OrbitControls( camera, renderer.domElement );
+				// controls.target.set( 0, 1, 0 );
+				controls.target.set( 2, 2, 0 );
+				controls.update();
+
+				//
+
+                // controls = new THREE.TrackballControls( camera );
+                // controls.rotateSpeed = 1.0;
+                // controls.zoomSpeed = 1.2;
+                // controls.panSpeed = 0.8;
+                // controls.noZoom = false;
+                // controls.noPan = false;
+                // controls.staticMoving = true;
+                // controls.dynamicDampingFactor = 0.3;
+
+                var dragControls = new THREE.DragControls( objects, camera, renderer.domElement );
+                dragControls.addEventListener( 'dragstart', function ( event ) { controls.enabled = false; } );
+                dragControls.addEventListener( 'dragend', function ( event ) { controls.enabled = true; } );
+
+				// Use Raycaster to determine if mouse is touching an object.
+				raycaster = new THREE.Raycaster();
+                mouse = new THREE.Vector2();
+
+
+
+                // stats = new Stats();
+				// container.appendChild( stats.dom );
+
+				//
+
+				window.addEventListener( 'resize', onWindowResize, false );
+                document.addEventListener( 'keydown', onKeyDown, false );
+                window.addEventListener( 'mousemove', onMouseMove, false );
+
+			}
+
+			function onWindowResize() {
+
+                /* Match these to #canvasContainer in stylesheet */
+                displayWidth = document.getElementById('canvasContainer').clientWidth;
+                displayHeight = document.getElementById('canvasContainer').clientHeight;
+                showWindowSize(); // testing
+
+                // camera.aspect = window.innerWidth / window.innerHeight;
+				camera.aspect = displayWidth / displayHeight;
+				camera.updateProjectionMatrix();
+
+				// renderer.setSize( window.innerWidth, window.innerHeight );
+				renderer.setSize( displayWidth, displayHeight );
+
+			}
+
+            function onKeyDown ( event ) {
+
+                switch ( event.keyCode ) {
+
+                    // TODO: Use Raycaster to see if mouse intersects bounding box of projector (or screen)
+					// TODO:
+
+					case 81: // q (move projector up, y-axis)
+                        projector.position.add(new THREE.Vector3(0, 0.03, 0));
+                        break;
+
+					case 69: // e (move projector down, y-axis)
+                        projector.position.sub(new THREE.Vector3(0, 0.03, 0));
+                        break;
+
+					case 65: // a (move projector left, backward on z-axis)
+                        projector.position.sub(new THREE.Vector3(0, 0, 0.03));
+                        break;
+
+					case 68: // d (move projector right, forward on z-axis)
+                        projector.position.add(new THREE.Vector3(0, 0, 0.03));
+                        break;
+
+					case 87: // w (move projector toward screen, backward on x-axis )
+                        projector.position.add(new THREE.Vector3(0.03, 0, 0));
+                        break;
+
+					case 83: // s (move projector away from screen, forward on x-axis)
+                        projector.position.sub(new THREE.Vector3(0.03, 0, 0));
+                        break;
+
+					case 90: // z (toggle left directional light)
+                        directionalLight1.visible = !directionalLight1.visible;
+                        dirLight1Helper.visible = !dirLight1Helper.visible;
+                        break;
+
+                    case 67: // c (toggle right directional light)
+                        directionalLight2.visible = !directionalLight2.visible;
+                        dirLight2Helper.visible = !dirLight2Helper.visible;
+                        break;
+
+					// case 37: // left arrow
+					// 	console.log("left");
+					// 	break;
+                    //
+					// case 39: // right arrow
+                     //    console.log("right");
+					// 	break;
+                    //
+					// case 38: // up arrow
+                     //    console.log("up");
+					// 	break;
+                    //
+					// case 40: // down arrow
+                     //    console.log("down");
+					// 	break;
+
+
+                }
+
+            }
+
+            function onMouseMove( event ) {
+
+                // calculate mouse position in normalized device coordinates
+                // (-1 to +1) for both components
+
+                mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
+                mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
+            }
+
+
+            function animate() {
+
+				requestAnimationFrame( animate );
+
+				render();
+				// stats.update();
+
+			}
+
+			function render() {
+
+				var delta = clock.getDelta();
+
+				// if ( mixer !== undefined ) {
+                //
+				// 	mixer.update( delta );
+                //
+				// }
+
+				// controls.update(); // use with trackball control
+
+				cameraData = camera.toJSON();
+
+				// document.getElementById("myInfo").innerHTML = "Camera Stuff:<br><br>" + JSON.stringify(cameraData);
+				// document.getElementById("info").innerHTML = JSON.stringify(cameraData);
+                // console.log(JSON.stringify(cameraData));
+
+                // update the picking ray with the camera and mouse position
+                raycaster.setFromCamera( mouse, camera );
+
+                // calculate objects intersecting the picking ray, set recursive = true to check descendants because
+				// the projector and projectorScreen are descendants.
+				// projector
+                // var intersects = raycaster.intersectObjects( scene.children );
+
+                // var intersects = raycaster.intersectObjects( scene.children, true );
+                //
+                // var posArray = [];
+                //
+                // for ( var i = 0; i < intersects.length; i++ ) {
+                //
+                //     // intersects[ i ].object.material.color.set( 0xff0000 );
+                //     console.log("name = " + intersects[i].object.name);
+                //     // console.log("id = " + intersects[i].object.id);
+                //     // console.log("intersects");
+                //
+                //     // intersects[i].object.position.toArray(posArray);
+                //     // console.log("pos: " + posArray);
+                //
+                // }
+
+
+
+                renderer.render( scene, camera );
+
+			}
+
+			function showWindowSize() {
+			    document.getElementById("windowW").innerHTML = "window width:  " + displayWidth + " px";
+			    document.getElementById("windowH").innerHTML = "window height: " + displayHeight + " px";
+
+                // console.log("div width: " + document.getElementById('canvasContainer').clientWidth);
+                // console.log("div height: " + document.getElementById('canvasContainer').clientHeight);
+
+                // document.getElementById("info").addEventListener("click", function() {
+                //     console.log(JSON.stringify(cameraData));
+                // })
+
+                // console.log("window innerWidth:  " + window.innerWidth);
+                // console.log("window innerHeight: " + window.innerHeight);
+                // console.log("window ratio:      " + (window.innerWidth / window.innerHeight));
+
+            }
+
+		</script>
+
+	</body>
+</html>
