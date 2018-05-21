@@ -22,10 +22,17 @@ a {
     box-sizing: border-box;
     display: flex;
     justify-content: space-evenly;
-    background-color: #444444;
+    /*background-color: #444444;*/
+    background-color: black;
     color: white;
     font-family: Monospace;
     font-size: 13px;
+}
+
+.titleContainer {
+    padding: 0px;
+    display: flex;
+    justify-content: center;
 }
 
 /*.headerLeft, .headerCenter, .headerRight,*/
@@ -49,15 +56,21 @@ a {
     /*background-color: darkgrey;*/
 }
 
+.pageTitle {
+
+}
+
 
 .contentContainer {
     width: 100%;
     margin: 0;
-    padding: 5px;
+    /*padding: 5px;*/
+    padding: 0px;
     box-sizing: border-box;
     display: flex; /* Flexbox container */
     justify-content: space-evenly;
-    background-color: lightgray;
+    /*background-color: lightgray;*/
+    background-color: black;
 }
 
 .upperLeft, .upperRight {
@@ -77,11 +90,9 @@ a {
 /*}*/
 
 #canvasContainer {
-    width: 65%;
-    /*width: 800px;*/
-    /*height: 450px;*/
+    /*width: 65%;*/
+    width: 100%;
     height: 600px;
-    /*height: 80%;*/
     /*padding: 5px;*/
     background-color: #888888;
 }
