@@ -45,7 +45,11 @@
 					<strong>e</strong> down
 				</div>
 				<div class="footerCenter">
-					toggle lights: <strong>z</strong> for left directional light, <strong>c</strong> for right directional light<br>
+					toggle lights: <strong>z</strong> for left directional light, <strong>c</strong> for right directional light
+					<br><br>
+					<strong>v</strong> to toggle projector bounding box
+					<br><br>
+					Select and move projector (and test cubes) with left mouse button.
 				</div>
 				<div class="footerRight">navigation:<br>
 					<strong>left</strong> move camera left<br>
@@ -465,8 +469,9 @@
 				directionalLight1.name = "dirLight1";
 				scene.add( directionalLight1 );
 
-                dirLight1Helper = new THREE.DirectionalLightHelper(directionalLight1, 1);
-                scene.add( dirLight1Helper );
+				// Show light location and direction to see where it is in the view port.
+                // dirLight1Helper = new THREE.DirectionalLightHelper(directionalLight1, 1);
+                // scene.add( dirLight1Helper );
 
 
                 // Light above, behind and to the right of projector
@@ -476,8 +481,9 @@
 				directionalLight2.name = "dirLight2";
 				scene.add( directionalLight2 );
 
-                dirLight2Helper = new THREE.DirectionalLightHelper(directionalLight2, 1);
-                scene.add( dirLight2Helper );
+                // Show light location and direction to see where it is in the view port.
+                // dirLight2Helper = new THREE.DirectionalLightHelper(directionalLight2, 1);
+                // scene.add( dirLight2Helper );
 
                 // var hemiLight = new THREE.HemisphereLight( 0xffffbb, 0x080820, 1 );
                 // scene.add( hemiLight );
