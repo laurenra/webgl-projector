@@ -1,0 +1,25 @@
+echo "Save files to deploy in webgl-projector.tar."
+echo "Run from directory above project directory."
+tar cvf webgl-projector.tar js/controls/DragControls.js
+tar rvf webgl-projector.tar js/controls/OrbitControls.js
+tar rvf webgl-projector.tar js/controls/TrackballControls.js
+
+tar rvf webgl-projector.tar js/libs/Detector.js
+tar rvf webgl-projector.tar js/libs/jquery-3.3.1.min.js
+tar rvf webgl-projector.tar js/libs/modernizr-custom.min.js
+tar rvf webgl-projector.tar js/libs/stats.min.js
+tar rvf webgl-projector.tar js/libs/three.min.js
+
+tar rvf webgl-projector.tar js/loaders/ColladaLoader.js
+tar rvf webgl-projector.tar js/loaders/OBJLoader.js
+
+tar rvf webgl-projector.tar js/projector.js
+
+tar rvf webgl-projector.tar models/collada/Projector1.dae
+tar rvf webgl-projector.tar models/collada/ProjectorScreen120inch.dae
+
+tar rvf webgl-projector.tar styles/projector.css
+
+tar rvf webgl-projector.tar textures/Wood_Floor_007_COLOR.jpg
+
+tar rvf webgl-projector.tar projector.html

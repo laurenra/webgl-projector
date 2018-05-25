@@ -18,6 +18,20 @@
 
 if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
 
+var helpText =
+
+$(document).ready( function() {
+    $("#helpBtn").click( function () {
+        toggleHelp();
+        // if (Modernizr.touchevents) {
+        //     $("#helpOverlayTouch").toggle();
+        // }
+        // else {
+        //     $("#helpOverlay").toggle();
+        // }
+    })
+})
+
 var container, stats, clock, controls;
 var displayWidth, displayHeight;
 var camera, scene, renderer, mixer;
@@ -39,37 +53,35 @@ var projectorBB, projectorBox, projectorBoxA;
 var displayRect;
 var objects = [];
 
+var debugObject = {};
+
 init();
 animate();
 
 function init() {
 
-    /* Use #canvasContainer as WebGL display window. */
-    var cHeight = Math.round(window.innerHeight * 0.7);
+
+
+    /* Use #projectorCanvas as WebGL display window. */
+    var cHeight;
     if (window.innerWidth / window.innerHeight < 1) {
         /* At least 16:10 for narrow (mobile) screens) to display projector and screen in window */
-        $('#canvasContainer').height(Math.round(window.innerWidth * 0.625));
+        cHeight = Math.round(window.innerWidth * 0.625);
     }
     else {
-        $('#canvasContainer').height(Math.round(window.innerHeight * 0.7));
+        cHeight = Math.round(window.innerHeight * 0.7);
     }
-    setDisplayWindow("canvasContainer");
+    $('#projectorCanvas').height(cHeight);
+    $('#contentLeft').height(cHeight);
+    $('#contentRight').height(cHeight);
 
-    container = document.getElementById( 'canvasContainer' );
+    setDisplayWindow("projectorCanvas");
+
+    container = document.getElementById( 'projectorCanvas' );
 
     showBrowserWindowSize(); // testing
     showCanvasWindowSize(); // testing
-
-    // console.log("div width: " + document.getElementById('canvasContainer').clientWidth);
-    // console.log("div height: " + document.getElementById('canvasContainer').clientHeight);
-
-    // document.getElementById("info").addEventListener("click", function() {
-    //     console.log(JSON.stringify(cameraData));
-    // })
-
-    // console.log("window innerWidth:  " + window.innerWidth);
-    // console.log("window innerHeight: " + window.innerHeight);
-    // console.log("window ratio:      " + (window.innerWidth / window.innerHeight));
+    updateDebugDisplay(); // testing
 
     // camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.1, 10000 );
     // camera = new THREE.PerspectiveCamera( 45, displayWidth / displayHeight, 0.1, 10000 );
@@ -96,29 +108,29 @@ function init() {
 
         // Create a bounding box around projector object so it can be picked and dragged.
         projectorBB = new THREE.Box3().setFromObject(projector);
-        var bMinX = projectorBB.min.x;
-        var bMinY = projectorBB.min.y;
-        var bMinZ = projectorBB.min.z;
-        var bMaxX = projectorBB.max.x;
-        var bMaxY = projectorBB.max.y;
-        var bMaxZ = projectorBB.max.z;
-        var bWidth = Math.abs(bMinX - bMaxX);
-        var bHeight = Math.abs(bMinY - bMaxY);
-        var bDepth = Math.abs(bMinZ - bMaxZ);
-
-        $("#infoLeft1").html("box min: "
-            + "<br>x = " + bMinX
-            + "<br>y = " + bMinY
-            + "<br>z = " + bMinZ
-            + "<br>box MAX: "
-            + "<br>x = " + bMaxX
-            + "<br>y = " + bMaxY
-            + "<br>z = " + bMaxZ
-            + "<br>box DIMENSIONS: "
-            + "<br>w = " + bWidth
-            + "<br>h = " + bHeight
-            + "<br>d = " + bDepth
-        );
+        // var bMinX = projectorBB.min.x;
+        // var bMinY = projectorBB.min.y;
+        // var bMinZ = projectorBB.min.z;
+        // var bMaxX = projectorBB.max.x;
+        // var bMaxY = projectorBB.max.y;
+        // var bMaxZ = projectorBB.max.z;
+        // var bWidth = Math.abs(bMinX - bMaxX);
+        // var bHeight = Math.abs(bMinY - bMaxY);
+        // var bDepth = Math.abs(bMinZ - bMaxZ);
+        //
+        // $("#infoLeft").html("box min: "
+        //     + "<br>&nbsp;&nbsp;x = " + bMinX
+        //     + "<br>&nbsp;&nbsp;y = " + bMinY
+        //     + "<br>&nbsp;&nbsp;z = " + bMinZ
+        //     + "<br>box MAX: "
+        //     + "<br>&nbsp;&nbsp;x = " + bMaxX
+        //     + "<br>&nbsp;&nbsp;y = " + bMaxY
+        //     + "<br>&nbsp;&nbsp;z = " + bMaxZ
+        //     + "<br>box DIMENSIONS: "
+        //     + "<br>&nbsp;&nbsp;w = " + bWidth
+        //     + "<br>&nbsp;&nbsp;h = " + bHeight
+        //     + "<br>&nbsp;&nbsp;d = " + bDepth
+        // );
 
         // projectorBox = new THREE.Mesh( new THREE.BoxGeometry(width, height, depth), new THREE.MeshLambertMaterial({ color : 0xFFF0FF }) );
         projectorBox = new THREE.Mesh(
@@ -449,13 +461,16 @@ function init() {
 
 function onWindowResize() {
 
-    /* Match these to #canvasContainer in stylesheet */
-    // displayWidth = document.getElementById('canvasContainer').clientWidth;
-    // displayHeight = document.getElementById('canvasContainer').clientHeight;
-    // setDisplayWindow("#canvasContainer");
-    setDisplayWindow("canvasContainer");
+    /* Match these to #projectorCanvas in stylesheet */
+    // displayWidth = document.getElementById('projectorCanvas').clientWidth;
+    // displayHeight = document.getElementById('projectorCanvas').clientHeight;
+
+    // setDisplayWindow("#projectorCanvas");
+    setDisplayWindow("projectorCanvas");
+
     showBrowserWindowSize(); // testing
     showCanvasWindowSize(); // testing
+    updateDebugDisplay(); // testing
 
     // camera.aspect = window.innerWidth / window.innerHeight;
     // camera.aspect = displayWidth / displayHeight;
@@ -507,16 +522,26 @@ function onKeyDown ( event ) {
 
         case 90: // z (toggle left directional light)
             directionalLight1.visible = !directionalLight1.visible;
-            dirLight1Helper.visible = !dirLight1Helper.visible;
+            // dirLight1Helper.visible = !dirLight1Helper.visible;
             break;
 
         case 67: // c (toggle right directional light)
             directionalLight2.visible = !directionalLight2.visible;
-            dirLight2Helper.visible = !dirLight2Helper.visible;
+            // dirLight2Helper.visible = !dirLight2Helper.visible;
             break;
 
         case 86: // v (toggle material visible)
             projectorBox.material.visible = !projectorBox.material.visible;
+            break;
+
+        case 72: // h (toggle help screen)
+            toggleHelp();
+            break;
+
+        case 88: // x (toggle debug info help screen)
+            toggleDebugInfo();
+            break;
+
 
         // case 37: // left arrow
         // 	console.log("left");
@@ -550,8 +575,46 @@ function onKeyDown ( event ) {
  * 	    _mouse.y = - ( ( event.clientY - rect.top ) / rect.height ) * 2 + 1;
  */
 function setDisplayWindow( divId ) {
-    // displayWindow.width = document.getElementById('canvasContainer').clientWidth;
-    // displayWindow.height = document.getElementById('canvasContainer').clientHeight;
+
+
+    // TESTING - BEGIN
+    // document.getElementById("infoRight1").innerHTML = "window.innerWidth: " + window.innerWidth +
+    //     "<br>window.innerHeight: " + window.innerHeight +
+    //     "<br>displayWidth: " + displayWindow.width +
+    //     "<br>displayHeight: " + displayWindow.height; // testing
+    // $("#infoRight2").html("mainContainer position:<br>"
+    //     + JSON.stringify($("#mainCont").position(), null, 2)
+    //     + "<br>mainContainer offset:<br>"
+    //     + JSON.stringify($("#mainCont").offset(), null, 2)
+    //     + "<br>contentContainer position:<br>"
+    //     + JSON.stringify($("#contentCont").position(), null, 2)
+    //     + "<br>contentContainer offset:<br>"
+    //     + JSON.stringify($("#contentCont").offset(), null, 2)
+    //     + "<br>projectorCanvas position:<br>"
+    //     + JSON.stringify($("#projectorCanvas").position(), null, 2)
+    //     + "<br>projectorCanvas offset:<br>"
+    //     + JSON.stringify($("#projectorCanvas").offset(), null, 2)
+    //     + "<br>BoundingClientRect:<br>"
+    //     + JSON.stringify(displayRect, null, 2)
+    // );
+
+    var divObject = {};
+    divObject['id'] = $("#" + divId).attr("id");
+    // divObject['position'] = JSON.stringify($("#" + divId).position);
+    divObject['position'] = $("#" + divId).position();
+    divObject['offset'] = $("#" + divId).offset();
+    divObject['width'] = $("#" + divId).width();
+    divObject['height'] = $("#" + divId).height();
+
+    debugObject['div'] = divObject;
+    // debugObject['div.id'] = "shite";
+
+    updateDebugDisplay();
+
+    // TESTING - END
+
+    // displayWindow.width = document.getElementById('projectorCanvas').clientWidth;
+    // displayWindow.height = document.getElementById('projectorCanvas').clientHeight;
     displayWindow.width = $("#" + divId).width();
     displayWindow.height = $("#" + divId).height();
 
@@ -563,20 +626,18 @@ function setDisplayWindow( divId ) {
     /**
      * Calculate top (inside) edge (y) of <div>. Add 2 for padding or something
      */
-    // displayWindow.top = ($("#canvasContainer").position().top + 2);
+    // displayWindow.top = ($("#projectorCanvas").position().top + 2);
     displayWindow.top = ($("#" + divId).position().top + 2);
 
     // Unnecessary to set lower-right coordinates (lr.x, lr.y) for now
 
     // Try .getBoundingClientRect()
     // displayRect = $(divId).getBoundingClientRect();
-    console.log("divId: " + divId);
     // displayRect = document.getElementById(divId).getBoundingClientRect();
     var div = document.getElementById(divId);
     // var div = $(divId);
     if (div.getBoundingClientRect()) {
         var rect = div.getBoundingClientRect();
-        console.log("rect: " + JSON.stringify(rect, null, 2));
     }
 
 }
@@ -609,28 +670,30 @@ function onMouseMove( event ) {
 
 
     // TESTING - BEGIN
-    document.getElementById("mousePos").innerHTML = "mouse position: (" + event.clientX + ", " + event.clientY + ")"; // testing
-    document.getElementById("mouseX").innerHTML = "x: " + clipCoordinates.x; // testing
-    document.getElementById("mouseY").innerHTML = "y: " + clipCoordinates.y; // testing
-    document.getElementById("infoRight1").innerHTML = "window.innerWidth: " + window.innerWidth +
-        "<br>window.innerHeight: " + window.innerHeight +
-        "<br>displayWidth: " + displayWindow.width +
-        "<br>displayHeight: " + displayWindow.height; // testing
-    $("#infoRight2").html("mainContainer position:<br>"
-        + JSON.stringify($("#mainCont").position(), null, 2)
-        + "<br>mainContainer offset:<br>"
-        + JSON.stringify($("#mainCont").offset(), null, 2)
-        + "<br>contentContainer position:<br>"
-        + JSON.stringify($("#contentCont").position(), null, 2)
-        + "<br>contentContainer offset:<br>"
-        + JSON.stringify($("#contentCont").offset(), null, 2)
-        + "<br>canvasContainer position:<br>"
-        + JSON.stringify($("#canvasContainer").position(), null, 2)
-        + "<br>canvasContainer offset:<br>"
-        + JSON.stringify($("#canvasContainer").offset(), null, 2)
-        + "<br>BoundingClientRect:<br>"
-        + JSON.stringify(displayRect, null, 2)
-    );
+    // document.getElementById("infoRight1").innerHTML = "window.innerWidth: " + window.innerWidth +
+    //     "<br>window.innerHeight: " + window.innerHeight +
+    //     "<br>displayWidth: " + displayWindow.width +
+    //     "<br>displayHeight: " + displayWindow.height; // testing
+    // $("#infoRight2").html("mainContainer position:<br>"
+    //     + JSON.stringify($("#mainCont").position(), null, 2)
+    //     + "<br>mainContainer offset:<br>"
+    //     + JSON.stringify($("#mainCont").offset(), null, 2)
+    //     + "<br>contentContainer position:<br>"
+    //     + JSON.stringify($("#contentCont").position(), null, 2)
+    //     + "<br>contentContainer offset:<br>"
+    //     + JSON.stringify($("#contentCont").offset(), null, 2)
+    //     + "<br>projectorCanvas position:<br>"
+    //     + JSON.stringify($("#projectorCanvas").position(), null, 2)
+    //     + "<br>projectorCanvas offset:<br>"
+    //     + JSON.stringify($("#projectorCanvas").offset(), null, 2)
+    //     + "<br>BoundingClientRect:<br>"
+    //     + JSON.stringify(displayRect, null, 2)
+    // );
+
+    debugObject['mouseX'] = event.clientX;
+    debugObject['mouseY'] = event.clientY;
+    updateDebugDisplay();
+
     // TESTING - END
 
 }
@@ -675,29 +738,14 @@ function render() {
 
     var posArray = [];
 
+    // TESTING - begin
     if (intersects.length > 0) {
-
-        $("#infoLeft2").html("name: " + intersects[0].object.name);
-
-        // for ( var i = 0; i < intersects.length; i++ ) {
-        //
-        //     // intersects[ i ].object.material.color.set( 0xff0000 );
-        //     // console.log("name = " + intersects[i].object.name);
-        //     $("#infoLeft2").html("name: " +
-        //         "<br>" + intersects[i].object.name
-        //     );
-        //     // console.log("id = " + intersects[i].object.id);
-        //     // console.log("intersects");
-        //
-        //     // intersects[i].object.position.toArray(posArray);
-        //     // console.log("pos: " + posArray);
-        //
-        // }
-
+        debugObject["intersect.name"] = intersects[0].object.name;
     }
     else {
-        $("#infoLeft2").html("--no objects--");
+        debugObject["intersect.name"] = "-none-";
     }
+    // TESTING - end
 
 
 
@@ -705,34 +753,76 @@ function render() {
 
 }
 
-function showBrowserWindowSize() {
-    // document.getElementById("windowW").innerHTML = "window width:  " + displayWidth + " px";
-    // document.getElementById("windowH").innerHTML = "window height: " + displayHeight + " px";
-    document.getElementById("windowW").innerHTML = "window:  " + window.innerWidth + " x " + window.innerHeight + " px";
-    console.log("window sz: " + window.innerWidth + " x " + window.innerHeight + " px");
 
-    // console.log("div width: " + document.getElementById('canvasContainer').clientWidth);
-    // console.log("div height: " + document.getElementById('canvasContainer').clientHeight);
+function toggleHelp() {
+    if (Modernizr.touchevents) {
+        $("#helpOverlayTouch").toggle();
+        // $("#helpOverlayTouch").toggleClass("overlayInvisible");
+    }
+    else {
+        // $("#helpOverlay").toggle();
+        // alert("toggle");
+        // $("#helpOverlay").attr("display", "none");
+        // $("#helpOverlay").css("display", "none");
+        // alert("display (" + $("#helpOverlay").css("display") + ")");
+        if ($("#helpOverlay").css("display") == "none") {
+            $("#helpOverlay").css("display", "block");
+        }
+        else {
+            $("#helpOverlay").css("display", "none");
+        }
+        // $("#helpOverlay").css("display", "block");
+        // $(".helpOverlay").toggleClass("overlayInvisible");
+    }
 
-    // document.getElementById("info").addEventListener("click", function() {
-    //     console.log(JSON.stringify(cameraData));
-    // })
+    if ($("#helpBtn").text() == "Show Help") {
+        $("#helpBtn").text("Hide Help");
+    }
+    else {
+        $("#helpBtn").text("Show Help")
+    }
+}
+
+
+function toggleDebugInfo() {
+    if ($("#debugOverlay").css("display") == "none") {
+        $("#debugOverlay").css("display", "block");
+    }
+    else {
+        $("#debugOverlay").css("display", "none");
+    }
+}
+
+
+function updateDebugDisplay() {
+    document.getElementById("debugOverlay").innerHTML = "<pre>" + JSON.stringify(debugObject, null, 2) + "</pre>";
+
+    // $("#infoRight2").html("mainContainer position:<br>"
+    //     + JSON.stringify($("#mainCont").position(), null, 2)
+    //     + "<br>mainContainer offset:<br>"
+    //     + JSON.stringify($("#mainCont").offset(), null, 2)
+    //     + "<br>contentContainer position:<br>"
+    //     + JSON.stringify($("#contentCont").position(), null, 2)
+    //     + "<br>contentContainer offset:<br>"
+    //     + JSON.stringify($("#contentCont").offset(), null, 2)
+    //     + "<br>projectorCanvas position:<br>"
+    //     + JSON.stringify($("#projectorCanvas").position(), null, 2)
+    //     + "<br>projectorCanvas offset:<br>"
+    //     + JSON.stringify($("#projectorCanvas").offset(), null, 2)
+    //     + "<br>BoundingClientRect:<br>"
+    //     + JSON.stringify(displayRect, null, 2)
+    // );
 
 }
 
+
+function showBrowserWindowSize() {
+    debugObject['window.innerWidth'] = window.innerWidth;
+    debugObject['window.innerHeight'] = window.innerHeight;
+}
+
 function showCanvasWindowSize() {
-    // document.getElementById("windowW").innerHTML = "window width:  " + displayWidth + " px";
-    // document.getElementById("windowH").innerHTML = "window height: " + displayHeight + " px";
-    // document.getElementById("windowW").innerHTML = "window width:  " + displayWindow.width + " px";
-    // document.getElementById("windowH").innerHTML = "window height: " + displayWindow.height + " px";
-    document.getElementById("windowH").innerHTML = "canvas:  " + displayWindow.width + " x " + displayWindow.height + " px";
-
-    // console.log("div width: " + document.getElementById('canvasContainer').clientWidth);
-    // console.log("div height: " + document.getElementById('canvasContainer').clientHeight);
-
-    // document.getElementById("info").addEventListener("click", function() {
-    //     console.log(JSON.stringify(cameraData));
-    // })
-
+    debugObject['canvas.width'] = displayWindow.width;
+    debugObject['canvas.height'] = displayWindow.height;
 }
 

@@ -4,6 +4,7 @@
 		<title>three.js webgl - collada - skinning</title>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<script src="js/libs/modernizr-custom.min.js"></script>
 		<script src="js/libs/jquery-3.3.1.min.js"></script>
 
 		<link href="styles/projector.css" rel="stylesheet" type="text/css" media="all">
@@ -19,61 +20,79 @@
 				<div class="headerRight"></div>
 			</div>
 			<div id="contentCont" class="contentContainer">
-				<div id="canvasContainer"></div>
+				<div id="contentLeft"></div>
+				<div id="canvasContainer">
+					<div id="projectorCanvas"></div>
+					<div id="helpOverlay">
+						Pan with <strong>arrow keys</strong> or <strong>right mouse button</strong>.
+						<br><br>
+						Orbit with <strong>left mouse button</strong>.
+						<br><br>
+						Zoom with <strong>scroll wheel</strong>.
+						<br><br>
+						Move projector by dragging with <strong>left mouse</strong> or using these keys:
+						<br>
+						<br>&nbsp;&nbsp;<strong>w</strong> toward screen
+						<br>&nbsp;&nbsp;<strong>s</strong> away from screen
+						<br>&nbsp;&nbsp;<strong>a</strong> left
+						<br>&nbsp;&nbsp;<strong>d</strong> right
+						<br>&nbsp;&nbsp;<strong>q</strong> up
+						<br>&nbsp;&nbsp;<strong>e</strong> down
+						<br><br>
+						Additional actions:
+						<br>
+						<br>&nbsp;&nbsp;<strong>h</strong> toggle help screen
+						<br>&nbsp;&nbsp;<strong>z</strong> toggle left directional light
+						<br>&nbsp;&nbsp;<strong>c</strong> toggle right directional light
+						<br>&nbsp;&nbsp;<strong>v</strong> toggle projector bounding box
+						<br>&nbsp;&nbsp;<strong>x</strong> toggle debug display
+					</div>
+					<div id="helpOverlayTouch">
+						Orbit with <strong>finger drag</strong>.
+						<br><br>
+						Pan with <strong>three-finger drag</strong>.
+						<br><br>
+						Zoom with <strong>finger pinch</strong>.
+						<br><br>
+						Move projector with <strong>finger drag</strong>
+					</div>
+					<div id="debugOverlay">debug info</div>
+				</div>
+				<div id="contentRight"></div>
 			</div>
 			<div class="footerContainer">
-				<div class="footerLeft">move projector:<br>
-					<strong>w</strong> forward toward screen<br>
-					<strong>s</strong> backward away from screen<br>
-					<strong>a</strong> left<br>
-					<strong>d</strong> right<br>
-					<strong>q</strong> up<br>
-					<strong>e</strong> down
+				<div class="footerLeft">
+					nothing
 				</div>
 				<div class="footerCenter">
-					toggle lights: <strong>z</strong> for left directional light, <strong>c</strong> for right directional light
-					<br><br>
-					<strong>v</strong> to toggle projector bounding box
-					<br><br>
-					Select and move projector (and test cubes) with left mouse button.
+					<div class="titleContainer">
+						<button id="helpBtn">Show Help</button>
+					</div>
 				</div>
-				<div class="footerRight">navigation:<br>
-					<strong>left</strong> move camera left<br>
-					<strong>right</strong> move camera right<br>
-					<strong>up</strong> move camera up<br>
-					<strong>down</strong> move camera down<br>
-					<strong>left-mouse</strong> orbit camera<br>
-					<strong>right-mouse</strong> pan camera<br>
-					<strong>scroll wheel</strong> zoom<br>
+				<div class="footerRight">
+					nothing
 				</div>
 			</div>
 
-			<div id="infoContainer">
-				<div class="upperLeft">
-					<div id="windowW">window width: </div>
-					<div id="windowH">window height: </div>
-					<div id="infoLeft1">info</div>
-					<div id="infoLeft2">info</div>
-				</div>
-				<div class="upperRight">
-					<div id="mousePos">mouse position: </div>
-					<div id="mouseX">x: </div>
-					<div id="mouseY">y: </div>
-					<div id="infoRight1">info</div>
-					<div id="infoRight2">info</div>
-				</div>
+			<!--<div id="infoContainer">-->
+				<!--<div class="upperLeft">-->
+					<!--<div id="infoLeft"></div>-->
+				<!--</div>-->
+				<!--<div class="upperRight">-->
+					<!--<div id="infoRight"></div>-->
+				<!--</div>-->
 
-			</div>
+			<!--</div>-->
 		</div>
 
 
-		<script src="js/three.js"></script>
+		<script src="js/libs/three.min.js"></script>
 		<script src="js/loaders/ColladaLoader.js"></script>
 		<!--<script src="js/loaders/OBJLoader.js"></script>-->
 		<script src="js/controls/OrbitControls.js"></script>
 		<!--<script src="js/controls/TrackballControls.js"></script>-->
 		<script src="js/controls/DragControls.js"></script>
-		<script src="js/Detector.js"></script>
+		<script src="js/libs/Detector.js"></script>
 		<script src="js/libs/stats.min.js"></script>
 
 		<script type="x-shader/x-vertex" id="vertexShader">
